@@ -1,5 +1,4 @@
 import { createApp } from "vue";
-
-createApp({
-  template: "<div>123</div>",
-}).mount("#app");
+import App from './App.tsx';
+const app = createApp(App);
+app.mount("#app");

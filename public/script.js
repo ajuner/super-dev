@@ -220,10 +220,10 @@
       }
     }
   };
-  function recordEffectScope(effect, scope) {
+  function recordEffectScope(effect2, scope) {
     scope = scope || activeEffectScope;
     if (scope && scope.active) {
-      scope.effects.push(effect);
+      scope.effects.push(effect2);
     }
   }
   var createDep = (effects) => {
@@ -241,14 +241,14 @@
       }
     }
   };
-  var finalizeDepMarkers = (effect) => {
-    const { deps } = effect;
+  var finalizeDepMarkers = (effect2) => {
+    const { deps } = effect2;
     if (deps.length) {
       let ptr = 0;
       for (let i = 0; i < deps.length; i++) {
         const dep = deps[i];
         if (wasTracked(dep) && !newTracked(dep)) {
-          dep.delete(effect);
+          dep.delete(effect2);
         } else {
           deps[ptr++] = dep;
         }
@@ -311,11 +311,11 @@
       }
     }
   };
-  function cleanupEffect(effect) {
-    const { deps } = effect;
+  function cleanupEffect(effect2) {
+    const { deps } = effect2;
     if (deps.length) {
       for (let i = 0; i < deps.length; i++) {
-        deps[i].delete(effect);
+        deps[i].delete(effect2);
       }
       deps.length = 0;
     }
@@ -440,15 +440,15 @@
     }
   }
   function triggerEffects(dep, debuggerEventExtraInfo) {
-    for (const effect of isArray(dep) ? dep : [...dep]) {
-      if (effect !== activeEffect || effect.allowRecurse) {
-        if (effect.onTrigger) {
-          effect.onTrigger(extend({ effect }, debuggerEventExtraInfo));
+    for (const effect2 of isArray(dep) ? dep : [...dep]) {
+      if (effect2 !== activeEffect || effect2.allowRecurse) {
+        if (effect2.onTrigger) {
+          effect2.onTrigger(extend({ effect: effect2 }, debuggerEventExtraInfo));
         }
-        if (effect.scheduler) {
-          effect.scheduler();
+        if (effect2.scheduler) {
+          effect2.scheduler();
         } else {
-          effect.run();
+          effect2.run();
         }
       }
     }
@@ -951,8 +951,39 @@
       }
     }
   }
+  var convert = (val) => isObject(val) ? reactive(val) : val;
   function isRef(r) {
     return Boolean(r && r.__v_isRef === true);
+  }
+  function ref(value) {
+    return createRef(value, false);
+  }
+  var RefImpl = class {
+    constructor(value, _shallow) {
+      this._shallow = _shallow;
+      this.dep = void 0;
+      this.__v_isRef = true;
+      this._rawValue = _shallow ? value : toRaw(value);
+      this._value = _shallow ? value : convert(value);
+    }
+    get value() {
+      trackRefValue(this);
+      return this._value;
+    }
+    set value(newVal) {
+      newVal = this._shallow ? newVal : toRaw(newVal);
+      if (hasChanged(newVal, this._rawValue)) {
+        this._rawValue = newVal;
+        this._value = this._shallow ? newVal : convert(newVal);
+        triggerRefValue(this, newVal);
+      }
+    }
+  };
+  function createRef(rawValue, shallow) {
+    if (isRef(rawValue)) {
+      return rawValue;
+    }
+    return new RefImpl(rawValue, shallow);
   }
   function unref(ref2) {
     return isRef(ref2) ? ref2.value : ref2;
@@ -1129,20 +1160,20 @@ Please upgrade vue-loader/vite/rollup-plugin-vue or other relevant dependency th
   function setDevtoolsHook(hook) {
     devtools = hook;
   }
-  function devtoolsInitApp(app, version2) {
+  function devtoolsInitApp(app2, version2) {
     if (!devtools)
       return;
-    devtools.emit("app:init", app, version2, {
+    devtools.emit("app:init", app2, version2, {
       Fragment,
       Text,
       Comment: Comment$1,
       Static
     });
   }
-  function devtoolsUnmountApp(app) {
+  function devtoolsUnmountApp(app2) {
     if (!devtools)
       return;
-    devtools.emit("app:unmount", app);
+    devtools.emit("app:unmount", app2);
   }
   var devtoolsComponentAdded = /* @__PURE__ */ createDevtoolsComponentHook("component:added");
   var devtoolsComponentUpdated = /* @__PURE__ */ createDevtoolsComponentHook("component:updated");
@@ -2032,6 +2063,9 @@ Please upgrade vue-loader/vite/rollup-plugin-vue or other relevant dependency th
       }
     }
     return ret;
+  }
+  function defineComponent(options) {
+    return isFunction(options) ? { setup: options, name: options.name } : options;
   }
   var isAsyncWrapper = (i) => !!i.type.__asyncLoader;
   var isKeepAlive = (vnode) => vnode.type.__isKeepAlive;
@@ -2948,7 +2982,7 @@ Please upgrade vue-loader/vite/rollup-plugin-vue or other relevant dependency th
       const context = createAppContext();
       const installedPlugins = new Set();
       let isMounted = false;
-      const app = context.app = {
+      const app2 = context.app = {
         _uid: uid++,
         _component: rootComponent,
         _props: rootProps,
@@ -2969,14 +3003,14 @@ Please upgrade vue-loader/vite/rollup-plugin-vue or other relevant dependency th
             warn2(`Plugin has already been applied to target app.`);
           } else if (plugin && isFunction(plugin.install)) {
             installedPlugins.add(plugin);
-            plugin.install(app, ...options);
+            plugin.install(app2, ...options);
           } else if (isFunction(plugin)) {
             installedPlugins.add(plugin);
-            plugin(app, ...options);
+            plugin(app2, ...options);
           } else if (true) {
             warn2(`A plugin must either be a function or an object with an "install" function.`);
           }
-          return app;
+          return app2;
         },
         mixin(mixin) {
           if (__VUE_OPTIONS_API__) {
@@ -2988,7 +3022,7 @@ Please upgrade vue-loader/vite/rollup-plugin-vue or other relevant dependency th
           } else if (true) {
             warn2("Mixins are only available in builds supporting Options API");
           }
-          return app;
+          return app2;
         },
         component(name, component) {
           if (true) {
@@ -3001,7 +3035,7 @@ Please upgrade vue-loader/vite/rollup-plugin-vue or other relevant dependency th
             warn2(`Component "${name}" has already been registered in target app.`);
           }
           context.components[name] = component;
-          return app;
+          return app2;
         },
         directive(name, directive) {
           if (true) {
@@ -3014,7 +3048,7 @@ Please upgrade vue-loader/vite/rollup-plugin-vue or other relevant dependency th
             warn2(`Directive "${name}" has already been registered in target app.`);
           }
           context.directives[name] = directive;
-          return app;
+          return app2;
         },
         mount(rootContainer, isHydrate, isSVG) {
           if (!isMounted) {
@@ -3031,11 +3065,11 @@ Please upgrade vue-loader/vite/rollup-plugin-vue or other relevant dependency th
               render(vnode, rootContainer, isSVG);
             }
             isMounted = true;
-            app._container = rootContainer;
-            rootContainer.__vue_app__ = app;
+            app2._container = rootContainer;
+            rootContainer.__vue_app__ = app2;
             if (true) {
-              app._instance = vnode.component;
-              devtoolsInitApp(app, version);
+              app2._instance = vnode.component;
+              devtoolsInitApp(app2, version);
             }
             return vnode.component.proxy;
           } else if (true) {
@@ -3045,12 +3079,12 @@ If you want to remount the same app, move your app creation logic into a factory
         },
         unmount() {
           if (isMounted) {
-            render(null, app._container);
+            render(null, app2._container);
             if (true) {
-              app._instance = null;
-              devtoolsUnmountApp(app);
+              app2._instance = null;
+              devtoolsUnmountApp(app2);
             }
-            delete app._container.__vue_app__;
+            delete app2._container.__vue_app__;
           } else if (true) {
             warn2(`Cannot unmount an app that is not mounted.`);
           }
@@ -3060,10 +3094,10 @@ If you want to remount the same app, move your app creation logic into a factory
             warn2(`App already provides property with key "${String(key)}". It will be overwritten with the new value.`);
           }
           context.provides[key] = value;
-          return app;
+          return app2;
         }
       };
-      return app;
+      return app2;
     };
   }
   var supported;
@@ -3519,14 +3553,14 @@ If you want to remount the same app, move your app creation logic into a factory
           const { el, props } = initialVNode;
           const { bm, m, parent } = instance;
           const isAsyncWrapperVNode = isAsyncWrapper(initialVNode);
-          effect.allowRecurse = false;
+          effect2.allowRecurse = false;
           if (bm) {
             invokeArrayFns(bm);
           }
           if (!isAsyncWrapperVNode && (vnodeHook = props && props.onVnodeBeforeMount)) {
             invokeVNodeHook(vnodeHook, parent, initialVNode);
           }
-          effect.allowRecurse = true;
+          effect2.allowRecurse = true;
           if (el && hydrateNode) {
             const hydrateSubTree = () => {
               if (true) {
@@ -3588,7 +3622,7 @@ If you want to remount the same app, move your app creation logic into a factory
           if (true) {
             pushWarningContext(next || instance.vnode);
           }
-          effect.allowRecurse = false;
+          effect2.allowRecurse = false;
           if (next) {
             next.el = vnode.el;
             updateComponentPreRender(instance, next, optimized);
@@ -3601,7 +3635,7 @@ If you want to remount the same app, move your app creation logic into a factory
           if (vnodeHook = next.props && next.props.onVnodeBeforeUpdate) {
             invokeVNodeHook(vnodeHook, parent, next, vnode);
           }
-          effect.allowRecurse = true;
+          effect2.allowRecurse = true;
           if (true) {
             startMeasure(instance, `render`);
           }
@@ -3636,13 +3670,13 @@ If you want to remount the same app, move your app creation logic into a factory
           }
         }
       };
-      const effect = new ReactiveEffect(componentUpdateFn, () => queueJob(instance.update), instance.scope);
-      const update = instance.update = effect.run.bind(effect);
+      const effect2 = new ReactiveEffect(componentUpdateFn, () => queueJob(instance.update), instance.scope);
+      const update = instance.update = effect2.run.bind(effect2);
       update.id = instance.uid;
-      effect.allowRecurse = update.allowRecurse = true;
+      effect2.allowRecurse = update.allowRecurse = true;
       if (true) {
-        effect.onTrack = instance.rtc ? (e) => invokeArrayFns(instance.rtc, e) : void 0;
-        effect.onTrigger = instance.rtg ? (e) => invokeArrayFns(instance.rtg, e) : void 0;
+        effect2.onTrack = instance.rtc ? (e) => invokeArrayFns(instance.rtc, e) : void 0;
+        effect2.onTrigger = instance.rtg ? (e) => invokeArrayFns(instance.rtg, e) : void 0;
         update.ownerInstance = instance;
       }
       update();
@@ -5299,17 +5333,17 @@ Component that was made reactive: `, type);
     }
     let cleanup;
     let onInvalidate = (fn) => {
-      cleanup = effect.onStop = () => {
+      cleanup = effect2.onStop = () => {
         callWithErrorHandling(fn, instance, 4);
       };
     };
     let oldValue = isMultiSource ? [] : INITIAL_WATCHER_VALUE;
     const job = () => {
-      if (!effect.active) {
+      if (!effect2.active) {
         return;
       }
       if (cb) {
-        const newValue = effect.run();
+        const newValue = effect2.run();
         if (deep || forceTrigger || (isMultiSource ? newValue.some((v, i) => hasChanged(v, oldValue[i])) : hasChanged(newValue, oldValue)) || false) {
           if (cleanup) {
             cleanup();
@@ -5322,7 +5356,7 @@ Component that was made reactive: `, type);
           oldValue = newValue;
         }
       } else {
-        effect.run();
+        effect2.run();
       }
     };
     job.allowRecurse = !!cb;
@@ -5340,26 +5374,26 @@ Component that was made reactive: `, type);
         }
       };
     }
-    const effect = new ReactiveEffect(getter, scheduler);
+    const effect2 = new ReactiveEffect(getter, scheduler);
     if (true) {
-      effect.onTrack = onTrack;
-      effect.onTrigger = onTrigger;
+      effect2.onTrack = onTrack;
+      effect2.onTrigger = onTrigger;
     }
     if (cb) {
       if (immediate) {
         job();
       } else {
-        oldValue = effect.run();
+        oldValue = effect2.run();
       }
     } else if (flush === "post") {
-      queuePostRenderEffect(effect.run.bind(effect), instance && instance.suspense);
+      queuePostRenderEffect(effect2.run.bind(effect2), instance && instance.suspense);
     } else {
-      effect.run();
+      effect2.run();
     }
     return () => {
-      effect.stop();
+      effect2.stop();
       if (instance && instance.scope) {
-        remove(instance.scope.effects, effect);
+        remove(instance.scope.effects, effect2);
       }
     };
   }
@@ -6187,17 +6221,17 @@ Component that was made reactive: `, type);
     return renderer || (renderer = createRenderer(rendererOptions));
   }
   var createApp = (...args) => {
-    const app = ensureRenderer().createApp(...args);
+    const app2 = ensureRenderer().createApp(...args);
     if (true) {
-      injectNativeTagCheck(app);
-      injectCompilerOptionsCheck(app);
+      injectNativeTagCheck(app2);
+      injectCompilerOptionsCheck(app2);
     }
-    const { mount } = app;
-    app.mount = (containerOrSelector) => {
+    const { mount } = app2;
+    app2.mount = (containerOrSelector) => {
       const container = normalizeContainer(containerOrSelector);
       if (!container)
         return;
-      const component = app._component;
+      const component = app2._component;
       if (!isFunction(component) && !component.render && !component.template) {
         component.template = container.innerHTML;
       }
@@ -6209,18 +6243,18 @@ Component that was made reactive: `, type);
       }
       return proxy;
     };
-    return app;
+    return app2;
   };
-  function injectNativeTagCheck(app) {
-    Object.defineProperty(app.config, "isNativeTag", {
+  function injectNativeTagCheck(app2) {
+    Object.defineProperty(app2.config, "isNativeTag", {
       value: (tag) => isHTMLTag(tag) || isSVGTag(tag),
       writable: false
     });
   }
-  function injectCompilerOptionsCheck(app) {
+  function injectCompilerOptionsCheck(app2) {
     if (isRuntimeOnly()) {
-      const isCustomElement = app.config.isCustomElement;
-      Object.defineProperty(app.config, "isCustomElement", {
+      const isCustomElement = app2.config.isCustomElement;
+      Object.defineProperty(app2.config, "isCustomElement", {
         get() {
           return isCustomElement;
         },
@@ -6228,12 +6262,12 @@ Component that was made reactive: `, type);
           warn2(`The \`isCustomElement\` config option is deprecated. Use \`compilerOptions.isCustomElement\` instead.`);
         }
       });
-      const compilerOptions = app.config.compilerOptions;
+      const compilerOptions = app2.config.compilerOptions;
       const msg = `The \`compilerOptions\` config option is only respected when using a build of Vue.js that includes the runtime compiler (aka "full build"). Since you are using the runtime-only build, \`compilerOptions\` must be passed to \`@vue/compiler-dom\` in the build setup instead.
 - For vue-loader: pass it via vue-loader's \`compilerOptions\` loader option.
 - For vue-cli: see https://cli.vuejs.org/guide/webpack.html#modifying-options-of-a-loader
 - For vite: pass it via @vitejs/plugin-vue options. See https://github.com/vitejs/vite/tree/main/packages/plugin-vue#example-for-passing-options-to-vuecompiler-dom`;
-      Object.defineProperty(app.config, "compilerOptions", {
+      Object.defineProperty(app2.config, "compilerOptions", {
         get() {
           warn2(msg);
           return compilerOptions;
@@ -6268,8 +6302,20 @@ Component that was made reactive: `, type);
     initDev();
   }
 
+  // src/App.tsx
+  var App_default = defineComponent({
+    setup() {
+      const count = ref(0);
+      const add2 = () => {
+        count.value++;
+      };
+      return () => createVNode("div", {
+        "onClick": add2
+      }, [count.value]);
+    }
+  });
+
   // src/index.ts
-  createApp({
-    template: "<div>123</div>"
-  }).mount("#app");
+  var app = createApp(App_default);
+  app.mount("#app");
 })();

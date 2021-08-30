@@ -1,4 +1,5 @@
 import { createApp } from "vue";
-import App from "./App.vue";
 
-createApp(App).mount("#app");
+createApp({
+  template: "<div>123</div>",
+}).mount("#app");

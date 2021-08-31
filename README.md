@@ -5,7 +5,7 @@
 - [x] dev-server
 - [x] typescript
 - [x] .jsx
-- [ ] .vue
+- [x] .vue
 - [ ] .less
 - [ ] eslint
 - [ ] prettire

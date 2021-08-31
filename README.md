@@ -6,7 +6,12 @@
 - [x] typescript
 - [x] .jsx
 - [x] .vue
-- [ ] .less
-- [ ] eslint
-- [ ] prettire
-- [ ] husky
+- [x] .less
+- [x] vue-router
+- [x] eslint
+- [x] prettire
+
+## bug
+
+- [ ] route
+- [ ] build

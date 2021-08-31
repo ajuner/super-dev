@@ -1,4 +1,4 @@
-import { defineComponent, ref } from "vue";
+import { defineComponent, ref } from 'vue';
 
 export default defineComponent({
   setup() {
@@ -8,6 +8,6 @@ export default defineComponent({
       count.value++;
     };
 
-    return () => <div onClick={add}>{count.value}</div>;
+    return () => <a-button onClick={add}>{count.value}</a-button>;
   },
 });

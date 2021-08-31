@@ -1,6 +1,8 @@
 const { build } = require("esbuild");
 const chokidar = require("chokidar");
 const liveServer = require("live-server");
+const vue = require("esbuild-plugin-vue");
+
 const vueJsxPlugin = require("./plugins/vue-jsx-plugin.js");
 
 (async () => {
@@ -15,10 +17,10 @@ const vueJsxPlugin = require("./plugins/vue-jsx-plugin.js");
     incremental: true,
     minify: process.env.NODE_ENV === "production",
     outfile: "./public/script.js",
-    plugins: [vueJsxPlugin()],
+    plugins: [vue.default(), vueJsxPlugin()],
   });
   chokidar
-    .watch("src/**/*.{ts,tsx}", {
+    .watch("src/**/*.{ts,tsx,vue}", {
       interval: 0,
     })
     .on("all", () => {

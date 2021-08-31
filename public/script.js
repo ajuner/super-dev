@@ -90,6 +90,28 @@
   var SVG_TAGS = "svg,animate,animateMotion,animateTransform,circle,clipPath,color-profile,defs,desc,discard,ellipse,feBlend,feColorMatrix,feComponentTransfer,feComposite,feConvolveMatrix,feDiffuseLighting,feDisplacementMap,feDistanceLight,feDropShadow,feFlood,feFuncA,feFuncB,feFuncG,feFuncR,feGaussianBlur,feImage,feMerge,feMergeNode,feMorphology,feOffset,fePointLight,feSpecularLighting,feSpotLight,feTile,feTurbulence,filter,foreignObject,g,hatch,hatchpath,image,line,linearGradient,marker,mask,mesh,meshgradient,meshpatch,meshrow,metadata,mpath,path,pattern,polygon,polyline,radialGradient,rect,set,solidcolor,stop,switch,symbol,text,textPath,title,tspan,unknown,use,view";
   var isHTMLTag = /* @__PURE__ */ makeMap(HTML_TAGS);
   var isSVGTag = /* @__PURE__ */ makeMap(SVG_TAGS);
+  var toDisplayString = (val) => {
+    return val == null ? "" : isArray(val) || isObject(val) && (val.toString === objectToString || !isFunction(val.toString)) ? JSON.stringify(val, replacer, 2) : String(val);
+  };
+  var replacer = (_key, val) => {
+    if (val && val.__v_isRef) {
+      return replacer(_key, val.value);
+    } else if (isMap(val)) {
+      return {
+        [`Map(${val.size})`]: [...val.entries()].reduce((entries, [key, val2]) => {
+          entries[`${key} =>`] = val2;
+          return entries;
+        }, {})
+      };
+    } else if (isSet(val)) {
+      return {
+        [`Set(${val.size})`]: [...val.values()]
+      };
+    } else if (isObject(val) && !isArray(val) && !isPlainObject(val)) {
+      return String(val);
+    }
+    return val;
+  };
   var EMPTY_OBJ = true ? Object.freeze({}) : {};
   var EMPTY_ARR = true ? Object.freeze([]) : [];
   var NOOP = () => {
@@ -220,10 +242,10 @@
       }
     }
   };
-  function recordEffectScope(effect2, scope) {
+  function recordEffectScope(effect, scope) {
     scope = scope || activeEffectScope;
     if (scope && scope.active) {
-      scope.effects.push(effect2);
+      scope.effects.push(effect);
     }
   }
   var createDep = (effects) => {
@@ -241,14 +263,14 @@
       }
     }
   };
-  var finalizeDepMarkers = (effect2) => {
-    const { deps } = effect2;
+  var finalizeDepMarkers = (effect) => {
+    const { deps } = effect;
     if (deps.length) {
       let ptr = 0;
       for (let i = 0; i < deps.length; i++) {
         const dep = deps[i];
         if (wasTracked(dep) && !newTracked(dep)) {
-          dep.delete(effect2);
+          dep.delete(effect);
         } else {
           deps[ptr++] = dep;
         }
@@ -311,11 +333,11 @@
       }
     }
   };
-  function cleanupEffect(effect2) {
-    const { deps } = effect2;
+  function cleanupEffect(effect) {
+    const { deps } = effect;
     if (deps.length) {
       for (let i = 0; i < deps.length; i++) {
-        deps[i].delete(effect2);
+        deps[i].delete(effect);
       }
       deps.length = 0;
     }
@@ -440,15 +462,15 @@
     }
   }
   function triggerEffects(dep, debuggerEventExtraInfo) {
-    for (const effect2 of isArray(dep) ? dep : [...dep]) {
-      if (effect2 !== activeEffect || effect2.allowRecurse) {
-        if (effect2.onTrigger) {
-          effect2.onTrigger(extend({ effect: effect2 }, debuggerEventExtraInfo));
+    for (const effect of isArray(dep) ? dep : [...dep]) {
+      if (effect !== activeEffect || effect.allowRecurse) {
+        if (effect.onTrigger) {
+          effect.onTrigger(extend({ effect }, debuggerEventExtraInfo));
         }
-        if (effect2.scheduler) {
-          effect2.scheduler();
+        if (effect.scheduler) {
+          effect.scheduler();
         } else {
-          effect2.run();
+          effect.run();
         }
       }
     }
@@ -951,39 +973,8 @@
       }
     }
   }
-  var convert = (val) => isObject(val) ? reactive(val) : val;
   function isRef(r) {
     return Boolean(r && r.__v_isRef === true);
-  }
-  function ref(value) {
-    return createRef(value, false);
-  }
-  var RefImpl = class {
-    constructor(value, _shallow) {
-      this._shallow = _shallow;
-      this.dep = void 0;
-      this.__v_isRef = true;
-      this._rawValue = _shallow ? value : toRaw(value);
-      this._value = _shallow ? value : convert(value);
-    }
-    get value() {
-      trackRefValue(this);
-      return this._value;
-    }
-    set value(newVal) {
-      newVal = this._shallow ? newVal : toRaw(newVal);
-      if (hasChanged(newVal, this._rawValue)) {
-        this._rawValue = newVal;
-        this._value = this._shallow ? newVal : convert(newVal);
-        triggerRefValue(this, newVal);
-      }
-    }
-  };
-  function createRef(rawValue, shallow) {
-    if (isRef(rawValue)) {
-      return rawValue;
-    }
-    return new RefImpl(rawValue, shallow);
   }
   function unref(ref2) {
     return isRef(ref2) ? ref2.value : ref2;
@@ -1547,7 +1538,7 @@ Please upgrade vue-loader/vite/rollup-plugin-vue or other relevant dependency th
     accessedAttrs = true;
   }
   function renderComponentRoot(instance) {
-    const { type: Component, vnode, proxy, withProxy, props, propsOptions: [propsOptions], slots, attrs, emit: emit2, render, renderCache, data, setupState, ctx, inheritAttrs } = instance;
+    const { type: Component, vnode, proxy, withProxy, props, propsOptions: [propsOptions], slots, attrs, emit: emit2, render: render2, renderCache, data, setupState, ctx, inheritAttrs } = instance;
     let result;
     const prev = setCurrentRenderingInstance(instance);
     if (true) {
@@ -1557,21 +1548,21 @@ Please upgrade vue-loader/vite/rollup-plugin-vue or other relevant dependency th
       let fallthroughAttrs;
       if (vnode.shapeFlag & 4) {
         const proxyToUse = withProxy || proxy;
-        result = normalizeVNode(render.call(proxyToUse, proxyToUse, renderCache, props, setupState, data, ctx));
+        result = normalizeVNode(render2.call(proxyToUse, proxyToUse, renderCache, props, setupState, data, ctx));
         fallthroughAttrs = attrs;
       } else {
-        const render2 = Component;
+        const render3 = Component;
         if (attrs === props) {
           markAttrsAccessed();
         }
-        result = normalizeVNode(render2.length > 1 ? render2(props, true ? {
+        result = normalizeVNode(render3.length > 1 ? render3(props, true ? {
           get attrs() {
             markAttrsAccessed();
             return attrs;
           },
           slots,
           emit: emit2
-        } : { attrs, slots, emit: emit2 }) : render2(props, null));
+        } : { attrs, slots, emit: emit2 }) : render3(props, null));
         fallthroughAttrs = Component.props ? attrs : getFunctionalFallthrough(attrs);
       }
       let root = result;
@@ -2178,7 +2169,7 @@ Please upgrade vue-loader/vite/rollup-plugin-vue or other relevant dependency th
       beforeUnmount,
       destroyed,
       unmounted,
-      render,
+      render: render2,
       renderTracked,
       renderTriggered,
       errorCaptured,
@@ -2322,8 +2313,8 @@ Please upgrade vue-loader/vite/rollup-plugin-vue or other relevant dependency th
         instance.exposed = {};
       }
     }
-    if (render && instance.render === NOOP) {
-      instance.render = render;
+    if (render2 && instance.render === NOOP) {
+      instance.render = render2;
     }
     if (inheritAttrs != null) {
       instance.inheritAttrs = inheritAttrs;
@@ -2973,7 +2964,7 @@ Please upgrade vue-loader/vite/rollup-plugin-vue or other relevant dependency th
     };
   }
   var uid = 0;
-  function createAppAPI(render, hydrate) {
+  function createAppAPI(render2, hydrate) {
     return function createApp2(rootComponent, rootProps = null) {
       if (rootProps != null && !isObject(rootProps)) {
         warn2(`root props passed to app.mount() must be an object.`);
@@ -3056,13 +3047,13 @@ Please upgrade vue-loader/vite/rollup-plugin-vue or other relevant dependency th
             vnode.appContext = context;
             if (true) {
               context.reload = () => {
-                render(cloneVNode(vnode), rootContainer, isSVG);
+                render2(cloneVNode(vnode), rootContainer, isSVG);
               };
             }
             if (isHydrate && hydrate) {
               hydrate(vnode, rootContainer);
             } else {
-              render(vnode, rootContainer, isSVG);
+              render2(vnode, rootContainer, isSVG);
             }
             isMounted = true;
             app2._container = rootContainer;
@@ -3079,7 +3070,7 @@ If you want to remount the same app, move your app creation logic into a factory
         },
         unmount() {
           if (isMounted) {
-            render(null, app2._container);
+            render2(null, app2._container);
             if (true) {
               app2._instance = null;
               devtoolsUnmountApp(app2);
@@ -3553,14 +3544,14 @@ If you want to remount the same app, move your app creation logic into a factory
           const { el, props } = initialVNode;
           const { bm, m, parent } = instance;
           const isAsyncWrapperVNode = isAsyncWrapper(initialVNode);
-          effect2.allowRecurse = false;
+          effect.allowRecurse = false;
           if (bm) {
             invokeArrayFns(bm);
           }
           if (!isAsyncWrapperVNode && (vnodeHook = props && props.onVnodeBeforeMount)) {
             invokeVNodeHook(vnodeHook, parent, initialVNode);
           }
-          effect2.allowRecurse = true;
+          effect.allowRecurse = true;
           if (el && hydrateNode) {
             const hydrateSubTree = () => {
               if (true) {
@@ -3622,7 +3613,7 @@ If you want to remount the same app, move your app creation logic into a factory
           if (true) {
             pushWarningContext(next || instance.vnode);
           }
-          effect2.allowRecurse = false;
+          effect.allowRecurse = false;
           if (next) {
             next.el = vnode.el;
             updateComponentPreRender(instance, next, optimized);
@@ -3635,7 +3626,7 @@ If you want to remount the same app, move your app creation logic into a factory
           if (vnodeHook = next.props && next.props.onVnodeBeforeUpdate) {
             invokeVNodeHook(vnodeHook, parent, next, vnode);
           }
-          effect2.allowRecurse = true;
+          effect.allowRecurse = true;
           if (true) {
             startMeasure(instance, `render`);
           }
@@ -3670,13 +3661,13 @@ If you want to remount the same app, move your app creation logic into a factory
           }
         }
       };
-      const effect2 = new ReactiveEffect(componentUpdateFn, () => queueJob(instance.update), instance.scope);
-      const update = instance.update = effect2.run.bind(effect2);
+      const effect = new ReactiveEffect(componentUpdateFn, () => queueJob(instance.update), instance.scope);
+      const update = instance.update = effect.run.bind(effect);
       update.id = instance.uid;
-      effect2.allowRecurse = update.allowRecurse = true;
+      effect.allowRecurse = update.allowRecurse = true;
       if (true) {
-        effect2.onTrack = instance.rtc ? (e) => invokeArrayFns(instance.rtc, e) : void 0;
-        effect2.onTrigger = instance.rtg ? (e) => invokeArrayFns(instance.rtg, e) : void 0;
+        effect.onTrack = instance.rtc ? (e) => invokeArrayFns(instance.rtc, e) : void 0;
+        effect.onTrigger = instance.rtg ? (e) => invokeArrayFns(instance.rtg, e) : void 0;
         update.ownerInstance = instance;
       }
       update();
@@ -4030,7 +4021,7 @@ If you want to remount the same app, move your app creation logic into a factory
       }
       return hostNextSibling(vnode.anchor || vnode.el);
     };
-    const render = (vnode, container, isSVG) => {
+    const render2 = (vnode, container, isSVG) => {
       if (vnode == null) {
         if (container._vnode) {
           unmount(container._vnode, null, null, true);
@@ -4059,9 +4050,9 @@ If you want to remount the same app, move your app creation logic into a factory
       [hydrate, hydrateNode] = createHydrationFns(internals);
     }
     return {
-      render,
+      render: render2,
       hydrate,
-      createApp: createAppAPI(render, hydrate)
+      createApp: createAppAPI(render2, hydrate)
     };
   }
   function setRef(rawRef, oldRawRef, parentSuspense, vnode, isUnmount = false) {
@@ -4198,9 +4189,27 @@ If you want to remount the same app, move your app creation logic into a factory
   var Static = Symbol(true ? "Static" : void 0);
   var blockStack = [];
   var currentBlock = null;
+  function openBlock(disableTracking = false) {
+    blockStack.push(currentBlock = disableTracking ? null : []);
+  }
+  function closeBlock() {
+    blockStack.pop();
+    currentBlock = blockStack[blockStack.length - 1] || null;
+  }
   var isBlockTreeEnabled = 1;
   function setBlockTracking(value) {
     isBlockTreeEnabled += value;
+  }
+  function setupBlock(vnode) {
+    vnode.dynamicChildren = isBlockTreeEnabled > 0 ? currentBlock || EMPTY_ARR : null;
+    closeBlock();
+    if (isBlockTreeEnabled > 0 && currentBlock) {
+      currentBlock.push(vnode);
+    }
+    return vnode;
+  }
+  function createElementBlock(type, props, children, patchFlag, dynamicProps, shapeFlag) {
+    return setupBlock(createBaseVNode(type, props, children, patchFlag, dynamicProps, shapeFlag, true));
   }
   function isVNode(value) {
     return value ? value.__v_isVNode === true : false;
@@ -5333,17 +5342,17 @@ Component that was made reactive: `, type);
     }
     let cleanup;
     let onInvalidate = (fn) => {
-      cleanup = effect2.onStop = () => {
+      cleanup = effect.onStop = () => {
         callWithErrorHandling(fn, instance, 4);
       };
     };
     let oldValue = isMultiSource ? [] : INITIAL_WATCHER_VALUE;
     const job = () => {
-      if (!effect2.active) {
+      if (!effect.active) {
         return;
       }
       if (cb) {
-        const newValue = effect2.run();
+        const newValue = effect.run();
         if (deep || forceTrigger || (isMultiSource ? newValue.some((v, i) => hasChanged(v, oldValue[i])) : hasChanged(newValue, oldValue)) || false) {
           if (cleanup) {
             cleanup();
@@ -5356,7 +5365,7 @@ Component that was made reactive: `, type);
           oldValue = newValue;
         }
       } else {
-        effect2.run();
+        effect.run();
       }
     };
     job.allowRecurse = !!cb;
@@ -5374,26 +5383,26 @@ Component that was made reactive: `, type);
         }
       };
     }
-    const effect2 = new ReactiveEffect(getter, scheduler);
+    const effect = new ReactiveEffect(getter, scheduler);
     if (true) {
-      effect2.onTrack = onTrack;
-      effect2.onTrigger = onTrigger;
+      effect.onTrack = onTrack;
+      effect.onTrigger = onTrigger;
     }
     if (cb) {
       if (immediate) {
         job();
       } else {
-        oldValue = effect2.run();
+        oldValue = effect.run();
       }
     } else if (flush === "post") {
-      queuePostRenderEffect(effect2.run.bind(effect2), instance && instance.suspense);
+      queuePostRenderEffect(effect.run.bind(effect), instance && instance.suspense);
     } else {
-      effect2.run();
+      effect.run();
     }
     return () => {
-      effect2.stop();
+      effect.stop();
       if (instance && instance.scope) {
-        remove(instance.scope.effects, effect2);
+        remove(instance.scope.effects, effect);
       }
     };
   }
@@ -6302,20 +6311,26 @@ Component that was made reactive: `, type);
     initDev();
   }
 
-  // src/App.tsx
+  // vue:E:/github/ajuner/super-dev/src/App.vue?vue&type=script
   var App_default = defineComponent({
     setup() {
-      const count = ref(0);
-      const add2 = () => {
-        count.value++;
+      return {
+        msg: "1234"
       };
-      return () => createVNode("div", {
-        "onClick": add2
-      }, [count.value]);
     }
   });
 
+  // vue:E:/github/ajuner/super-dev/src/App.vue?vue&type=template
+  var _hoisted_1 = { class: "main" };
+  function render(_ctx, _cache) {
+    return openBlock(), createElementBlock("div", _hoisted_1, toDisplayString(_ctx.msg), 1);
+  }
+
+  // vue:E:\github\ajuner\super-dev\src\App.vue
+  App_default.render = render;
+  var App_default2 = App_default;
+
   // src/index.ts
-  var app = createApp(App_default);
+  var app = createApp(App_default2);
   app.mount("#app");
 })();

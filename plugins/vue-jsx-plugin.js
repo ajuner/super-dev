@@ -6,7 +6,7 @@ const importMeta = require("@babel/plugin-syntax-import-meta");
 
 module.exports = function () {
   return {
-    name: "vue",
+    name: "vue-jsx",
     setup(build) {
       build.onLoad({ filter: /\.[jt]sx$/ }, async (opts) => {
         const { path, pluginData } = opts;

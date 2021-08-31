@@ -9,7 +9,7 @@
 - [x] .less
 - [x] vue-router
 - [x] eslint
-- [x] prettire
+- [x] prettier
 
 ## bug
 

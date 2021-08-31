@@ -7,14 +7,13 @@
     "dev": "node app.ts"
   },
   "dependencies": {
-    "@vue/compiler-sfc": "^3.2.6",
-    "chokidar": "^3.5.2",
-    "esbuild": "^0.12.24",
-    "esbuild-plugin-vue": "^0.1.3",
-    "hash-sum": "^2.0.0",
     "vue": "^3.2.6"
   },
   "devDependencies": {
+    "esbuild": "^0.12.24",
+    "chokidar": "^3.5.2",
+    "esbuild-plugin-vue": "^0.1.3",
+    "@vue/compiler-sfc": "^3.2.6",
     "@babel/core": "^7.15.0",
     "@babel/plugin-syntax-import-meta": "^7.10.4",
     "@vue/babel-plugin-jsx": "^1.0.6",

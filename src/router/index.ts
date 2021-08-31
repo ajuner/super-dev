@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router';
+import { createRouter, createWebHashHistory } from 'vue-router';
 import type { RouteRecordRaw, RouteMeta } from 'vue-router';
 
 interface MenuRouteMeta {
@@ -28,6 +28,6 @@ const staticRoutes: MenuRouteItem[] = [
 ];
 
 export default createRouter({
-  history: createWebHistory('/'),
+  history: createWebHashHistory('/'),
   routes: staticRoutes,
 });

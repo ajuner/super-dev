@@ -10,7 +10,8 @@ const vueJsxPlugin = require("./plugins/vue-jsx-plugin.js");
     bundle: true,
     define: {
       "process.env.NODE_ENV": JSON.stringify(
-        process.env.NODE_ENV || "devlopment"
+        // 打包暂时手动这里改成production
+        process.env.NODE_ENV || "production"
       ),
     },
     entryPoints: ["src/index.ts"],

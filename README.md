@@ -10,8 +10,9 @@
 - [x] vue-router
 - [x] eslint
 - [x] prettier
+- [x] production
+- [ ] env
 
 ## bug
 
-- [ ] route
-- [ ] build
+- [x] route

@@ -12,8 +12,4 @@
 - [x] prettier
 - [x] production
 - [x] babel-plugin-import
-- [ ] env
-
-## bug
-
-- [x] route
+- [ ] hash

@@ -5,11 +5,11 @@
   "license": "MIT",
   "scripts": {
     "dev": "node app.ts",
-    "prod": "node app.ts"
+    "prod": "node build.ts"
   },
   "dependencies": {
     "ant-design-vue": "^2.2.6",
-    "babel-plugin-import": "^1.13.3",
+    "axios": "^0.21.1",
     "vue": "^3.2.6",
     "vue-router": "^4.0.10",
     "vuex": "^4.0.2"
@@ -19,6 +19,7 @@
     "@babel/plugin-syntax-import-meta": "^7.10.4",
     "@vue/babel-plugin-jsx": "^1.0.6",
     "@vue/compiler-sfc": "^3.2.6",
+    "babel-plugin-import": "^1.13.3",
     "chokidar": "^3.5.2",
     "esbuild": "^0.12.24",
     "esbuild-plugin-less": "^1.1.0",

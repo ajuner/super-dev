@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "ant-design-vue": "^2.2.6",
+    "babel-plugin-import": "^1.13.3",
     "vue": "^3.2.6",
     "vue-router": "^4.0.10",
     "vuex": "^4.0.2"

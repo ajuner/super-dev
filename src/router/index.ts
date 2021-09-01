@@ -10,8 +10,6 @@ type MenuRouteItem = {
   meta?: MenuRouteMeta & RouteMeta;
 } & RouteRecordRaw;
 
-import { MenuRouteItem } from './typing.ts';
-
 const staticRoutes: MenuRouteItem[] = [
   {
     path: '/',

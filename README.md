@@ -11,6 +11,7 @@
 - [x] eslint
 - [x] prettier
 - [x] production
+- [x] babel-plugin-import
 - [ ] env
 
 ## bug

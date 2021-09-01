@@ -5,7 +5,7 @@ const vueJsxPlugin = require('./plugins/vue-jsx-plugin.js');
 const importPlugin = require('./plugins/import-plugin.js');
 
 (async function () {
-  const builder = await build({
+  await build({
     bundle: true,
     define: {
       'process.env.NODE_ENV': JSON.stringify('production'),

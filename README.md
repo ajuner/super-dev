@@ -12,4 +12,3 @@
 - [x] prettier
 - [x] production
 - [x] babel-plugin-import
-- [ ] hash
